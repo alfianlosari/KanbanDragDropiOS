@@ -123,6 +123,8 @@ extension BoardCollectionViewCell: UITableViewDropDelegate {
                         updatedIndexPaths =  (sourceIndexPath.row...destinationIndexPath.row).map { IndexPath(row: $0, section: 0) }
                     } else if sourceIndexPath.row > destinationIndexPath.row {
                         updatedIndexPaths =  (destinationIndexPath.row...sourceIndexPath.row).map { IndexPath(row: $0, section: 0) }
+                    } else {
+                        updatedIndexPaths = []
                     }
                     self.tableView.beginUpdates()
                     self.board?.items.remove(at: sourceIndexPath.row)
