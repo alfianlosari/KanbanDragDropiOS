@@ -118,7 +118,7 @@ extension BoardCollectionViewCell: UITableViewDropDelegate {
                 switch (coordinator.items.first?.sourceIndexPath, coordinator.destinationIndexPath) {
                 case (.some(let sourceIndexPath), .some(let destinationIndexPath)):
                     // Same Table View
-                    let updatedIndexPaths: [IndexPath]()
+                    let updatedIndexPaths: [IndexPath]
                     if sourceIndexPath.row < destinationIndexPath.row {
                         updatedIndexPaths =  (sourceIndexPath.row...destinationIndexPath.row).map { IndexPath(row: $0, section: 0) }
                     } else if sourceIndexPath.row > destinationIndexPath.row {
