@@ -9,14 +9,11 @@
 import UIKit
 import MobileCoreServices
 
-class ItemCollectionViewCell: UICollectionViewCell {
+class BoardCollectionViewCell: UICollectionViewCell {
     
     @IBOutlet weak var tableView: UITableView!
-    weak var parentVC: MainViewController?
-    var data: DataSource?
-    
-    static let jsonEncoder = JSONEncoder()
-    static let jsonDecoder = JSONDecoder()
+    weak var parentVC: BoardCollectionViewController?
+    var board: Board?
     
     override func awakeFromNib() {
         super.awakeFromNib()
@@ -29,10 +26,11 @@ class ItemCollectionViewCell: UICollectionViewCell {
         tableView.dropDelegate = self
         
         tableView.tableFooterView = UIView()
+        
     }
     
-    func setup(with data: DataSource) {
-        self.data = data
+    func setup(with data: Board) {
+        self.board = data
         tableView.reloadData()
     }
     
@@ -44,7 +42,7 @@ class ItemCollectionViewCell: UICollectionViewCell {
                 return
             }
             
-            guard let data = self.data else {
+            guard let data = self.board else {
                 return
             }
             
@@ -60,19 +58,19 @@ class ItemCollectionViewCell: UICollectionViewCell {
     }
 }
 
-extension ItemCollectionViewCell: UITableViewDataSource, UITableViewDelegate {
+extension BoardCollectionViewCell: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return data?.items.count ?? 0
+        return board?.items.count ?? 0
     }
     
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        return data?.title
+        return board?.title
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
-        cell.textLabel?.text = "\(data!.items[indexPath.row])"
+        cell.textLabel?.text = "\(board!.items[indexPath.row])"
         return cell
     }
     
@@ -82,73 +80,16 @@ extension ItemCollectionViewCell: UITableViewDataSource, UITableViewDelegate {
     
 }
 
-extension ItemCollectionViewCell: UITableViewDragDelegate, UITableViewDropDelegate {
-    
-    func tableView(_ tableView: UITableView, performDropWith coordinator: UITableViewDropCoordinator) {
-        if coordinator.session.hasItemsConforming(toTypeIdentifiers: [kUTTypePlainText as String]) {
-            coordinator.session.loadObjects(ofClass: NSString.self) { (items) in
-                guard let string = items.first as? String else {
-                    return
-                }
-                
-                var updatedIndexPaths = [IndexPath]()
-                
-                switch (coordinator.items.first?.sourceIndexPath, coordinator.destinationIndexPath) {
-                case (.some(let sourceIndexPath), .some(let destinationIndexPath)):
-                    // Same Table View
-                    self.data?.items.remove(at: sourceIndexPath.row)
-                    self.data?.items.insert(string, at: destinationIndexPath.row)
-                    
-                    if sourceIndexPath.row < destinationIndexPath.row {
-                        updatedIndexPaths =  (sourceIndexPath.row...destinationIndexPath.row).map { IndexPath(row: $0, section: 0) }
-                    } else if sourceIndexPath.row > destinationIndexPath.row {
-                        updatedIndexPaths =  (destinationIndexPath.row...sourceIndexPath.row).map { IndexPath(row: $0, section: 0) }
-                    }
-                    
-                    self.tableView.reloadRows(at: updatedIndexPaths, with: .automatic)
-                    break
-                    
-                case (nil, .some(let destinationIndexPath)):
-                    // Move data from a table to another table
-                    self.data?.items.insert(string, at: destinationIndexPath.row)
-                    self.removeSourceTableData(localContext: coordinator.session.localDragSession?.localContext)
-                    self.tableView.insertRows(at: [destinationIndexPath], with: .automatic)
-                    break
-                    
-                    
-                case (nil, nil):
-                    // Insert data from a table to another table
-                    self.data?.items.append(string)
-                    self.removeSourceTableData(localContext: coordinator.session.localDragSession?.localContext)
-                    self.tableView.insertRows(at: [IndexPath(row: self.data!.items.count - 1 , section: 0)], with: .automatic)
-                    break
-                    
-                default: break
-                    
-                }
-            }
-        }
-    }
-    
-    func removeSourceTableData(localContext: Any?) {
-        if let (dataSource, sourceIndexPath, tableView) = localContext as? (DataSource, IndexPath, UITableView) {
-            dataSource.items.remove(at: sourceIndexPath.row)
-            tableView.deleteRows(at: [sourceIndexPath], with: .automatic)
-        }
-    }
-    
-    func tableView(_ tableView: UITableView, dropSessionDidUpdate session: UIDropSession, withDestinationIndexPath destinationIndexPath: IndexPath?) -> UITableViewDropProposal {
-        return UITableViewDropProposal(operation: .move, intent: .insertAtDestinationIndexPath)
-    }
+extension BoardCollectionViewCell: UITableViewDragDelegate {
     
     func tableView(_ tableView: UITableView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
-        guard let data = data, let stringData = data.items[indexPath.row].data(using: .utf8) else {
+        guard let board = board, let stringData = board.items[indexPath.row].data(using: .utf8) else {
             return []
         }
         
         let itemProvider = NSItemProvider(item: stringData as NSData, typeIdentifier: kUTTypePlainText as String)
         let dragItem = UIDragItem(itemProvider: itemProvider)
-        session.localContext = (data, indexPath, tableView)
+        session.localContext = (board, indexPath, tableView)
         
         return [dragItem]
     }
@@ -161,6 +102,72 @@ extension ItemCollectionViewCell: UITableViewDragDelegate, UITableViewDropDelega
     func tableView(_ tableView: UITableView, dragSessionDidEnd session: UIDragSession) {
         self.parentVC?.setupAddButtonItem()
         self.parentVC?.navigationItem.leftBarButtonItem = nil
+    }
+    
+}
+
+extension BoardCollectionViewCell: UITableViewDropDelegate {
+    
+    func tableView(_ tableView: UITableView, performDropWith coordinator: UITableViewDropCoordinator) {
+        if coordinator.session.hasItemsConforming(toTypeIdentifiers: [kUTTypePlainText as String]) {
+            coordinator.session.loadObjects(ofClass: NSString.self) { (items) in
+                guard let string = items.first as? String else {
+                    return
+                }
+                var updatedIndexPaths = [IndexPath]()
+                
+                switch (coordinator.items.first?.sourceIndexPath, coordinator.destinationIndexPath) {
+                case (.some(let sourceIndexPath), .some(let destinationIndexPath)):
+                    // Same Table View
+                    if sourceIndexPath.row < destinationIndexPath.row {
+                        updatedIndexPaths =  (sourceIndexPath.row...destinationIndexPath.row).map { IndexPath(row: $0, section: 0) }
+                    } else if sourceIndexPath.row > destinationIndexPath.row {
+                        updatedIndexPaths =  (destinationIndexPath.row...sourceIndexPath.row).map { IndexPath(row: $0, section: 0) }
+                    }
+                    self.tableView.beginUpdates()
+                    self.board?.items.remove(at: sourceIndexPath.row)
+                    self.board?.items.insert(string, at: destinationIndexPath.row)
+                    self.tableView.reloadRows(at: updatedIndexPaths, with: .automatic)
+                    self.tableView.endUpdates()
+                    break
+                    
+                case (nil, .some(let destinationIndexPath)):
+                    // Move data from a table to another table
+                    self.removeSourceTableData(localContext: coordinator.session.localDragSession?.localContext)
+                    self.tableView.beginUpdates()
+                    self.board?.items.insert(string, at: destinationIndexPath.row)
+                    self.tableView.insertRows(at: [destinationIndexPath], with: .automatic)
+                    self.tableView.endUpdates()
+                    break
+                    
+                    
+                case (nil, nil):
+                    // Insert data from a table to another table
+                    self.removeSourceTableData(localContext: coordinator.session.localDragSession?.localContext)
+                    self.tableView.beginUpdates()
+                    self.board?.items.append(string)
+                    self.tableView.insertRows(at: [IndexPath(row: self.board!.items.count - 1 , section: 0)], with: .automatic)
+                    self.tableView.endUpdates()
+                    break
+                    
+                default: break
+                    
+                }
+            }
+        }
+    }
+    
+    func removeSourceTableData(localContext: Any?) {
+        if let (dataSource, sourceIndexPath, tableView) = localContext as? (Board, IndexPath, UITableView) {
+            tableView.beginUpdates()
+            dataSource.items.remove(at: sourceIndexPath.row)
+            tableView.deleteRows(at: [sourceIndexPath], with: .automatic)
+            tableView.endUpdates()
+        }
+    }
+    
+    func tableView(_ tableView: UITableView, dropSessionDidUpdate session: UIDropSession, withDestinationIndexPath destinationIndexPath: IndexPath?) -> UITableViewDropProposal {
+        return UITableViewDropProposal(operation: .move, intent: .insertAtDestinationIndexPath)
     }
     
 }

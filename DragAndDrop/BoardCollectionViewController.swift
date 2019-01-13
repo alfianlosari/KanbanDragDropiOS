@@ -9,12 +9,12 @@
 import UIKit
 import MobileCoreServices
 
-class MainViewController: UICollectionViewController, UICollectionViewDelegateFlowLayout {
+class BoardCollectionViewController: UICollectionViewController, UICollectionViewDelegateFlowLayout {
     
-    var data = [
-        DataSource(title: "Todo", items: ["Database Migration", "Schema Design", "Storage Management", "Model Abstraction"]),
-        DataSource(title: "In Progress", items: ["Push Notification", "Analytics", "Machine Learning"]),
-        DataSource(title: "Done", items: ["System Architecture", "Alert & Debugging"])
+    var boards = [
+        Board(title: "Todo", items: ["Database Migration", "Schema Design", "Storage Management", "Model Abstraction","Database Migration", "Schema Design", "Storage Management", "Model Abstraction","Database Migration", "Schema Design", "Storage Management", "Model Abstraction","Database Migration", "Schema Design", "Storage Management", "Model Abstraction","Database Migration", "Schema Design", "Storage Management", "Model Abstraction","Database Migration", "Schema Design", "Storage Management", "Model Abstraction","Database Migration", "Schema Design", "Storage Management", "Model Abstraction","Database Migration", "Schema Design", "Storage Management", "Model Abstraction","Database Migration", "Schema Design", "Storage Management", "Model Abstraction","Database Migration", "Schema Design", "Storage Management", "Model Abstraction","Database Migration", "Schema Design", "Storage Management", "Model Abstraction","Database Migration", "Schema Design", "Storage Management", "Model Abstraction","Database Migration", "Schema Design", "Storage Management", "Model Abstraction","Database Migration", "Schema Design", "Storage Management", "Model Abstraction"]),
+        Board(title: "In Progress", items: ["Push Notification", "Analytics", "Machine Learning"]),
+        Board(title: "Done", items: ["System Architecture", "Alert & Debugging"])
     ]
     
     override func viewDidLoad() {
@@ -53,9 +53,9 @@ class MainViewController: UICollectionViewController, UICollectionViewDelegateFl
                 return
             }
             
-            self.data.append(DataSource(title: text, items: []))
+            self.boards.append(Board(title: text, items: []))
             
-            let addedIndexPath = IndexPath(item: self.data.count - 1, section: 0)
+            let addedIndexPath = IndexPath(item: self.boards.count - 1, section: 0)
             
             self.collectionView.insertItems(at: [addedIndexPath])
             self.collectionView.scrollToItem(at: addedIndexPath, at: UICollectionView.ScrollPosition.centeredHorizontally, animated: true)
@@ -66,13 +66,13 @@ class MainViewController: UICollectionViewController, UICollectionViewDelegateFl
     }
     
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return data.count
+        return boards.count
     }
     
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Cell", for: indexPath) as! ItemCollectionViewCell
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Cell", for: indexPath) as! BoardCollectionViewCell
         
-        cell.setup(with: data[indexPath.item])
+        cell.setup(with: boards[indexPath.item])
         cell.parentVC = self
         return cell
     }
@@ -83,7 +83,7 @@ class MainViewController: UICollectionViewController, UICollectionViewDelegateFl
     
 }
 
-extension MainViewController: UIDropInteractionDelegate {
+extension BoardCollectionViewController: UIDropInteractionDelegate {
     
     func dropInteraction(_ interaction: UIDropInteraction, sessionDidUpdate session: UIDropSession) -> UIDropProposal {
         return UIDropProposal(operation: .move)
@@ -97,9 +97,11 @@ extension MainViewController: UIDropInteractionDelegate {
                     return
                 }
                 
-                if let (dataSource, sourceIndexPath, tableView) = session.localDragSession?.localContext as? (DataSource, IndexPath, UITableView) {
+                if let (dataSource, sourceIndexPath, tableView) = session.localDragSession?.localContext as? (Board, IndexPath, UITableView) {
+                    tableView.beginUpdates()
                     dataSource.items.remove(at: sourceIndexPath.row)
                     tableView.deleteRows(at: [sourceIndexPath], with: .automatic)
+                    tableView.endUpdates()
                 }
             }
         }

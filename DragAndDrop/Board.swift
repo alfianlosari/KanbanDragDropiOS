@@ -8,7 +8,7 @@
 
 import Foundation
 
-class DataSource: Codable {
+class Board: Codable {
     
     var title: String
     var items: [String]
