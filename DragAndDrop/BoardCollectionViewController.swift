@@ -12,7 +12,7 @@ import MobileCoreServices
 class BoardCollectionViewController: UICollectionViewController, UICollectionViewDelegateFlowLayout {
     
     var boards = [
-        Board(title: "Todo", items: ["Database Migration", "Schema Design", "Storage Management", "Model Abstraction","Database Migration", "Schema Design", "Storage Management", "Model Abstraction","Database Migration", "Schema Design", "Storage Management", "Model Abstraction","Database Migration", "Schema Design", "Storage Management", "Model Abstraction","Database Migration", "Schema Design", "Storage Management", "Model Abstraction","Database Migration", "Schema Design", "Storage Management", "Model Abstraction","Database Migration", "Schema Design", "Storage Management", "Model Abstraction","Database Migration", "Schema Design", "Storage Management", "Model Abstraction","Database Migration", "Schema Design", "Storage Management", "Model Abstraction","Database Migration", "Schema Design", "Storage Management", "Model Abstraction","Database Migration", "Schema Design", "Storage Management", "Model Abstraction","Database Migration", "Schema Design", "Storage Management", "Model Abstraction","Database Migration", "Schema Design", "Storage Management", "Model Abstraction","Database Migration", "Schema Design", "Storage Management", "Model Abstraction"]),
+        Board(title: "Todo", items: ["Database Migration", "Schema Design", "Storage Management", "Model Abstraction"]),
         Board(title: "In Progress", items: ["Push Notification", "Analytics", "Machine Learning"]),
         Board(title: "Done", items: ["System Architecture", "Alert & Debugging"])
     ]
@@ -20,15 +20,24 @@ class BoardCollectionViewController: UICollectionViewController, UICollectionVie
     override func viewDidLoad() {
         super.viewDidLoad()
         setupNavigationBar()
+        updateCollectionViewItem(with: view.bounds.size)
     }
     
     private func setupNavigationBar() {
         setupAddButtonItem()
     }
     
+    
     override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
         super.viewWillTransition(to: size, with: coordinator)
-        collectionView.performBatchUpdates(nil, completion: nil)
+        updateCollectionViewItem(with: size)
+    }
+    
+    private func updateCollectionViewItem(with size: CGSize) {
+        guard let layout = collectionView.collectionViewLayout as? UICollectionViewFlowLayout else {
+            return
+        }
+        layout.itemSize = CGSize(width: 225, height: size.height * 0.8)
     }
     
     func setupAddButtonItem() {
@@ -75,10 +84,6 @@ class BoardCollectionViewController: UICollectionViewController, UICollectionVie
         cell.setup(with: boards[indexPath.item])
         cell.parentVC = self
         return cell
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return CGSize(width: 225, height: view.bounds.height * 0.8)
     }
     
 }
