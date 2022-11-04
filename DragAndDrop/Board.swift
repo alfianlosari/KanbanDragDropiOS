@@ -7,7 +7,7 @@
 //
 
 import Foundation
-
+// this is good code
 class Board: Codable {
     
     var title: String
